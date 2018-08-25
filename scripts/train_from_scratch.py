@@ -42,8 +42,8 @@ def main():
 
     net = voxelnet.VoxelNet(args.num_class, input_shape=(10, 10, 10))
     net.cuda()
-    optimizer = optim.SGD(net.parameters(), args.lr, weight_decay=0.005)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=16, gamma=0.8)
+    optimizer = optim.SGD(net.parameters(), args.lr, weight_decay=1e-5)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=8, gamma=0.5)
 
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -79,7 +79,7 @@ def train_one_epoch(net, train_loader, optimizer, criterion, logger):
         total_ins += len(label)
         total_loss += loss.data.cpu().numpy()[0]
 
-        if i % 10 == 9:
+        if i % 20 == 19:
             logger.info("\titer {}/{}: loss {:.4f}, train_acc {:.2f}%".format
                         (i+1, num_batch,  total_loss/(i+1), 100.*correct/total_ins))
             # print(type(i), type(num_batch), type(total_loss), type(correct), type(total_ins))
