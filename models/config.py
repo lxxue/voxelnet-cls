@@ -1,27 +1,25 @@
 import math
-import numpy as np
-
 
 class config:
 
     # classes
-    class_list = ['Car', 'Van']
+    # class_list = ['Car', 'Van']
 
     # batch size
     N = 32
 
     # maxiumum number of points per voxel
-    T = 35
+    T = 16
 
     # voxel size
-    vd = 0.125
-    vh = 0.125
-    vw = 0.125
+    vd = 0.3
+    vh = 0.3
+    vw = 0.3
 
     # points cloud range
-    xrange = (-1, 1)
-    yrange = (-1, 1)
-    zrange = (-1, 1)
+    xrange = (-1.5, 1.5)
+    yrange = (-1.5, 1.5)
+    zrange = (-1.5, 1.5)
 
     # voxel grid
     W = math.ceil((xrange[1] - xrange[0]) / vw)

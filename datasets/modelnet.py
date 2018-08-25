@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from torch.utils.data import Dataset
+import torch
 
 
 class ModelNet(Dataset):
@@ -15,9 +16,10 @@ class ModelNet(Dataset):
     def __getitem__(self, index):
         data = self.data[index]
         label = self.label[index]
-        if self.transform is not None:
-            data = self.transform(data)
-        return data, label
+        assert self.transform is not None
+        voxel_features, voxel_coords = self.transform(data)
+        # print(type(voxel_features), type(voxel_coords), type(label))
+        return voxel_features, voxel_coords, torch.from_numpy(label)
 
     def __len__(self):
         return self.data.shape[0]
@@ -46,10 +48,10 @@ class FewModelNet(ModelNet):
     def __getitem__(self, index):
         data = self.data[index]
         label = self.label[index]
-        if self.transform is not None:
-            data = self.transform(data)
-
-        return data, label
+        assert self.transform is not None
+        # if self.transform is not None:
+        voxel_features, voxel_coords = self.transform(data)
+        return voxel_features, voxel_coords, torch.from_numpy(label)
 
     def __len__(self):
         return self.data.shape[0]

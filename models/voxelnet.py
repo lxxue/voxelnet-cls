@@ -5,7 +5,9 @@ import torch.nn.functional as F
 import torch
 from torch.autograd import Variable
 from collections import OrderedDict
-from config import config as cfg
+import sys
+
+from .config import config as cfg
 
 # conv2d + bn + relu
 class Conv2d(nn.Module):
@@ -125,7 +127,7 @@ class CML(nn.Module):
 
 class VoxNet(torch.nn.Module):
 
-    def __init__(self, num_classes, input_shape=(32, 32, 32)):
+    def __init__(self, num_classes, input_shape):
                  # weights_path=None,
                  # load_body_weights=True,
                  # load_head_weights=True):
@@ -165,7 +167,7 @@ class VoxNet(torch.nn.Module):
 
         # Trick to accept different input shapes
         x = self.body(torch.autograd.Variable(
-            torch.rand((1, 1) + input_shape)))
+            torch.rand((1, 128) + input_shape)))
         first_fc_in_features = 1
         for n in x.size()[1:]:
             first_fc_in_features *= n
@@ -211,13 +213,13 @@ class VoxelNet(nn.Module):
 
         # feature learning network
         vwfs = self.svfe(voxel_features)
-        print(vwfs.size())
+        # print(vwfs.size())
         vwfs = self.voxel_indexing(vwfs, voxel_coords)
-        print(vwfs.size())
+        # print(vwfs.size())
 
         # convolutional middle network
         cml_out = self.cml(vwfs)
-        print(cml_out.size())
+        # print(cml_out.size())
 
         # region proposal network
 
