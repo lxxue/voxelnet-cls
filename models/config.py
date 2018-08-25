@@ -6,15 +6,15 @@ class config:
     # class_list = ['Car', 'Van']
 
     # batch size
-    N = 32
+    N = 16
 
     # maxiumum number of points per voxel
     T = 16
 
     # voxel size
-    vd = 0.3
-    vh = 0.3
-    vw = 0.3
+    vd = 0.1
+    vh = 0.1
+    vw = 0.1
 
     # points cloud range
     xrange = (-1.5, 1.5)

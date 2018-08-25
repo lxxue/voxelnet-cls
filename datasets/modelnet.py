@@ -33,7 +33,7 @@ class FewModelNet(ModelNet):
         data = []
         label = []
         for i in range(num_class):
-            idx = (self.label == i)
+            idx = np.squeeze(self.label == i)
             data_i = self.data[idx]
             label_i = self.label[idx]
 

@@ -110,19 +110,19 @@ class SVFE(nn.Module):
 
 
 # Convolutional Middle Layer
-class CML(nn.Module):
-
-    def __init__(self):
-        super(CML, self).__init__()
-        self.conv3d_1 = Conv3d(128, 64, 3, s=(2, 1, 1), p=(1, 1, 1))
-        self.conv3d_2 = Conv3d(64, 64, 3, s=(1, 1, 1), p=(0, 1, 1))
-        self.conv3d_3 = Conv3d(64, 64, 3, s=(2, 1, 1), p=(1, 1, 1))
-
-    def forward(self, x):
-        x = self.conv3d_1(x)
-        x = self.conv3d_2(x)
-        x = self.conv3d_3(x)
-        return x
+# class CML(nn.Module):
+#
+#     def __init__(self):
+#         super(CML, self).__init__()
+#         self.conv3d_1 = Conv3d(128, 64, 3, s=(2, 1, 1), p=(1, 1, 1))
+#         self.conv3d_2 = Conv3d(64, 64, 3, s=(1, 1, 1), p=(0, 1, 1))
+#         self.conv3d_3 = Conv3d(64, 64, 3, s=(2, 1, 1), p=(1, 1, 1))
+#
+#     def forward(self, x):
+#         x = self.conv3d_1(x)
+#         x = self.conv3d_2(x)
+#         x = self.conv3d_3(x)
+#         return x
 
 
 class VoxNet(torch.nn.Module):
@@ -156,10 +156,10 @@ class VoxNet(torch.nn.Module):
         self.body = torch.nn.Sequential(OrderedDict([
             ('conv1', torch.nn.Conv3d(in_channels=128,
                                       # out_channels=32, kernel_size=5, stride=2)),
-                                      out_channels=32, kernel_size=5, stride=2)),
+                                      out_channels=32, kernel_size=7, stride=2)),
             ('lkrelu1', torch.nn.LeakyReLU()),
             ('drop1', torch.nn.Dropout(p=0.2)),
-            ('conv2', torch.nn.Conv3d(in_channels=32, out_channels=32, kernel_size=3)),
+            ('conv2', torch.nn.Conv3d(in_channels=32, out_channels=32, kernel_size=5)),
             ('lkrelu2', torch.nn.LeakyReLU()),
             ('pool2', torch.nn.MaxPool3d(2)),# #
             ('drop2', torch.nn.Dropout(p=0.3))

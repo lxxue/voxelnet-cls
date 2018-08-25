@@ -40,10 +40,10 @@ def main():
     val_loader = DataLoader(val_dataset, batch_size=cfg.N, shuffle=False,
                             num_workers=6, collate_fn=customized_collate, pin_memory=True, drop_last=True)
 
-    net = voxelnet.VoxelNet(args.num_class, input_shape=(10, 10, 10))
+    net = voxelnet.VoxelNet(args.num_class, input_shape=(cfg.D, cfg.H, cfg.W))
     net.cuda()
     optimizer = optim.SGD(net.parameters(), args.lr, weight_decay=1e-5)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=8, gamma=0.5)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=16, gamma=0.5)
 
     criterion = torch.nn.CrossEntropyLoss()
 
