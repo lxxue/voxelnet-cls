@@ -204,6 +204,27 @@ def save_scripts():
     os.system("cp {} {}".format("../utils/data_transform.py", os.path.join(args.log_dir, "data_transform.py")))
 
 
+def load_checkpoint(logger, net):
+    logger.info("Loading saved model...")
+    assert os.path.isfile(args.ckpt_fname), "Error: no checkpoint file found!"
+
+    old_state_dict = torch.load(args.ckpt_fname)
+    new_state_dict = net.state_dict()
+
+    same_weight = {}
+    for k, v in old_state_dict.items():
+        if k in new_state_dict and new_state_dict[k].size() == old_state_dict[k].size():
+            logger.info("same weight: {}".format(k))
+            same_weight[k] = v
+        else:
+            logger.info("discarded weight: {}".format(k))
+
+    new_state_dict.update(same_weight)
+    net.load_state_dict(new_state_dict)
+
+    return
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dset_dir", type=str, required=True)
@@ -212,5 +233,6 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, required=True)
     parser.add_argument("--few", action='store_true')
     parser.add_argument("--log_dir", type=str, required=True)
+    parser.add_argument("--ckpt_fname", type=str)
     args = parser.parse_args()
     main()

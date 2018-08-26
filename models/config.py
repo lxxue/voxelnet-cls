@@ -12,9 +12,9 @@ class config:
     T = 16
 
     # voxel size
-    vd = 0.1
-    vh = 0.1
-    vw = 0.1
+    vd = 0.15
+    vh = 0.15
+    vw = 0.15
 
     # points cloud range
     xrange = (-1.5, 1.5)

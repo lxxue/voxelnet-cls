@@ -124,7 +124,7 @@ class SVFE(nn.Module):
 #         x = self.conv3d_3(x)
 #         return x
 
-
+# copy from https://github.com/lxxue/voxnet-pytorch/blob/master/models/voxnet.py
 class VoxNet(torch.nn.Module):
 
     def __init__(self, num_classes, input_shape):
@@ -156,11 +156,12 @@ class VoxNet(torch.nn.Module):
         self.body = torch.nn.Sequential(OrderedDict([
             ('conv1', torch.nn.Conv3d(in_channels=128,
                                       # out_channels=32, kernel_size=5, stride=2)),
-                                      out_channels=32, kernel_size=7, stride=2)),
+                                      out_channels=32, kernel_size=5, stride=2)),
             ('lkrelu1', torch.nn.LeakyReLU()),
             ('drop1', torch.nn.Dropout(p=0.2)),
-            ('conv2', torch.nn.Conv3d(in_channels=32, out_channels=32, kernel_size=5)),
+            ('conv2', torch.nn.Conv3d(in_channels=32, out_channels=32, kernel_size=3, stride=1)),
             ('lkrelu2', torch.nn.LeakyReLU()),
+            # ('pool2', torch.nn.MaxPool3d(2)),
             ('pool2', torch.nn.MaxPool3d(2)),# #
             ('drop2', torch.nn.Dropout(p=0.3))
         ]))
