@@ -49,11 +49,14 @@ def main():
 
     net = voxelnet.VoxelNet(args.num_class, input_shape=(cfg.D, cfg.H, cfg.W))
     logger.info("Total # parameters: {}".format(sum([p.numel() for p in net.parameters()])))
+    load_checkpoint(logger, net)
     # logger.info("trainable # parameters: {}".format(sum([p.numel() for p in net.parameters() if p.requires_grad])))
     for name, param in net.named_parameters():
-        logger.info("{}: {} {}".format(name, param.size(), param.numel()))
+        if param.requires_grad:
+            logger.info("Trainable params {}: {} {}".format(name, param.size(), param.numel()))
+        else:
+            logger.info("Non-trainable params {}: {} {}".format(name, param.size(), param.numel()))
     net.cuda()
-    #return
     optimizer = optim.SGD(net.parameters(), args.lr, weight_decay=1e-5)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=8, gamma=0.8)
 

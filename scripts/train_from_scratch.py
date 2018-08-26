@@ -202,6 +202,7 @@ def save_scripts():
     os.system("cp {} {}".format("../models/config.py", os.path.join(args.log_dir, "config.py")))
     os.system("cp {} {}".format("../models/voxelnet.py", os.path.join(args.log_dir, "voxelnet.py")))
     os.system("cp {} {}".format("../utils/data_transform.py", os.path.join(args.log_dir, "data_transform.py")))
+    os.system("cp {} {}".format(__file__, os.path.join(args.log_dir, "script.py")))
 
 
 if __name__ == "__main__":
