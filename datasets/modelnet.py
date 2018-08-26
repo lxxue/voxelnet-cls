@@ -18,7 +18,7 @@ class ModelNet(Dataset):
         label = self.label[index]
         assert self.transform is not None
         voxel_features, voxel_coords = self.transform(data)
-        # print(type(voxel_features), type(voxel_coords), type(label))
+        # print(voxel_features.type(), voxel_coords.type(), type(label))
         return voxel_features, voxel_coords, torch.from_numpy(label)
 
     def __len__(self):
@@ -51,7 +51,7 @@ class FewModelNet(ModelNet):
         assert self.transform is not None
         # if self.transform is not None:
         voxel_features, voxel_coords = self.transform(data)
-        return voxel_features, voxel_coords, torch.from_numpy(label)
+        return voxel_features, voxel_coords, label
 
     def __len__(self):
         return self.data.shape[0]

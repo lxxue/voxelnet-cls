@@ -69,7 +69,7 @@ class AppendCenteredCoord(object):
         voxel_coords = ((pc - np.array([self.xrange[0], self.yrange[0], self.zrange[0]])) /
                         (self.vw, self.vh, self.vd)).astype(np.int32)
 
-        voxel_coords = voxel_coords[:, [2,1,0]]
+        voxel_coords = voxel_coords[:, [2, 1, 0]]
         voxel_coords, inv_ind, voxel_counts = np.unique(voxel_coords, axis=0,
                                                         return_inverse=True, return_counts=True)
         voxel_features = []
@@ -90,5 +90,5 @@ class ToTensor(object):
 
     def __call__(self, voxel_stuff):
         voxel_features, voxel_coords = voxel_stuff
-        return torch.from_numpy(voxel_features), voxel_coords
+        return torch.from_numpy(voxel_features), torch.from_numpy(voxel_coords)
 

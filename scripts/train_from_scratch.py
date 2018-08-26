@@ -22,10 +22,14 @@ from models import voxelnet
 def main():
     torch.backends.cudnn.enable = True
     logger = init_logger()
+    bin_count = voxel_count()
+    print(bin_count[0][:15])
+    print(bin_count[1][:15])
     transform = T.Compose([data_transform.RotatePC(),
                            data_transform.JitterPC(0.01, 0.05),
-                           data_transform.AppendCenteredCoord(cfg),
-                           data_transform.ToTensor()])
+                           data_transform.AppendCenteredCoord(cfg)])
+                           # To Tensor done in collate function
+                           # data_transform.ToTensor()])
     if args.few:
         train_dataset = modelnet.FewModelNet(args.dset_dir, 'train', transform, args.num_class,
                                              num_perclass=9)
@@ -34,16 +38,18 @@ def main():
 
     val_dataset = modelnet.ModelNet(args.dset_dir, 'test', transform)
 
-    # TODO: fix the problem of last patch
     train_loader = DataLoader(train_dataset, batch_size=cfg.N, shuffle=True,
                               num_workers=6, collate_fn=customized_collate, pin_memory=True, drop_last=True)
-    val_loader = DataLoader(val_dataset, batch_size=cfg.N, shuffle=False,
+    # shuffle val_dataset since I drop last batch
+    val_loader = DataLoader(val_dataset, batch_size=cfg.N, shuffle=True,
                             num_workers=6, collate_fn=customized_collate, pin_memory=True, drop_last=True)
 
     net = voxelnet.VoxelNet(args.num_class, input_shape=(cfg.D, cfg.H, cfg.W))
     net.cuda()
     optimizer = optim.SGD(net.parameters(), args.lr, weight_decay=1e-5)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=16, gamma=0.5)
+    logger.info("Total # parameters: {}".format(sum([p.numel() for p in net.parameters()])))
+    # logger.info("trainable # parameters: {}".format(sum([p.numel() for p in net.parameters() if p.requires_grad])))
 
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -64,8 +70,14 @@ def train_one_epoch(net, train_loader, optimizer, criterion, logger):
     num_batch = len(train_loader)
     total_loss = 0.
 
+    if args.few:
+        log_interval = len(train_loader)
+    else:
+        log_interval = 100 if args.num_class == 30 else 20
+
     for i, (voxel_features, voxel_coords, label) in enumerate(train_loader):
         voxel_features = Variable(voxel_features.cuda())
+        voxel_coords = Variable(voxel_coords.cuda())
         label = Variable(label.cuda())
 
         optimizer.zero_grad()
@@ -79,14 +91,17 @@ def train_one_epoch(net, train_loader, optimizer, criterion, logger):
         total_ins += len(label)
         total_loss += loss.data.cpu().numpy()[0]
 
-        if i % 20 == 19:
-            logger.info("\titer {}/{}: loss {:.4f}, train_acc {:.2f}%".format
-                        (i+1, num_batch,  total_loss/(i+1), 100.*correct/total_ins))
+        if (i + 1) % log_interval == 0:
+            logger.info("\t\titer {}/{}: loss {:.4f}, train_acc {:.2f}%".format
+                        (i+1, num_batch,  total_loss/log_interval, 100.*correct/total_ins))
+            correct = 0
+            total_ins = 0
+            total_loss = 0.
             # print(type(i), type(num_batch), type(total_loss), type(correct), type(total_ins))
             # logger.info("\titer {}/{}: loss, train_acc ".format(int(i+1), int(num_batch)))
 
     t1 = time.time()
-    logger.info("\tTimer: {:.2f} sec.".format(t1-t0))
+    logger.info("\t\tTimer: {:.2f} sec.".format(t1-t0))
     return
 
 
@@ -99,6 +114,7 @@ def val_one_epoch(net, val_loader, logger):
 
     for i, (voxel_features, voxel_coords, label) in enumerate(val_loader):
         voxel_features = Variable(voxel_features.cuda())
+        voxel_coords = Variable(voxel_coords.cuda())
         label = Variable(label.cuda())
         score = net(voxel_features, voxel_coords)
         _, pred = torch.max(score, dim=1)
@@ -106,8 +122,8 @@ def val_one_epoch(net, val_loader, logger):
         total_ins += len(label)
 
     t1 = time.time()
-    logger.info("\tTest: val_acc {:.2f}%".format(100. * correct / total_ins))
-    logger.info("\tTimer: {:.2f} sec.".format(t1 - t0))
+    logger.info("\t\tVal: val_acc {:.2f}%".format(100. * correct / total_ins))
+    logger.info("\t\tTimer: {:.2f} sec.".format(t1 - t0))
     return
 
 
@@ -138,7 +154,34 @@ def customized_collate(batch):
                                    mode='constant', constant_values=i))
         label.append(sample[2])
 
-    return torch.cat(voxel_features), np.concatenate(voxel_coords), torch.cat(label)
+    voxel_features = torch.from_numpy(np.concatenate(voxel_features))
+    # voxel_coords = torch.from_numpy(np.concatenate(voxel_coords).astype(np.long))
+    voxel_coords = torch.from_numpy(np.concatenate(voxel_coords).astype(np.long))
+    label = torch.from_numpy(np.concatenate(label))
+    return voxel_features, voxel_coords, label
+
+
+def voxel_count():
+    train_data = np.load(os.path.join(args.dset_dir, "pc_train.npy"))
+    val_data = np.load(os.path.join(args.dset_dir, "pc_test.npy"))
+    bin_count = [np.zeros((512,), dtype=np.float), np.zeros((512,), dtype=np.float)]
+    for i, dataset in enumerate([train_data, val_data]):
+        for j in range(len(dataset)):
+            pc = dataset[j]
+            voxel_coords = ((pc - np.array([cfg.xrange[0], cfg.yrange[0], cfg.zrange[0]])) /
+                            (cfg.vw, cfg.vh, cfg.vd)).astype(np.int32)
+
+            # voxel_coords = voxel_coords[:, [2, 1, 0]]
+            _, _, voxel_counts = np.unique(voxel_coords, axis=0,
+                                           return_inverse=True, return_counts=True)
+            bin_count_j = np.bincount(voxel_counts, minlength=512)
+            bin_count[i] += bin_count_j
+
+    bin_count[0] = bin_count[0] / len(train_data)
+    # bin_count[0][0] = cfg.D * cfg.H * cfg.W - np.sum(bin_count[0])
+    bin_count[1] = bin_count[1] / len(val_data)
+    # bin_count[1][0] = cfg.D * cfg.H * cfg.W - np.sum(bin_count[1])
+    return bin_count
 
 
 if __name__ == "__main__":
