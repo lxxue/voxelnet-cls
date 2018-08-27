@@ -1,4 +1,4 @@
-for i in `seq 3 3`
+for i in `seq 0 4`
 do
     CUDA_VISIBLE_DEVICES=0 \
     python ../scripts/train_from_scratch.py \
