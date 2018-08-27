@@ -1,6 +1,6 @@
-for i in `seq 0 9`
+for i in `seq 3 3`
 do
-    CUDA_VISIBLE_DEVICES=1 \
+    CUDA_VISIBLE_DEVICES=0 \
     python ../scripts/train_from_scratch.py \
         --dset_dir ../data/m10 \
         --num_class 10 \
