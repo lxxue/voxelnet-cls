@@ -67,7 +67,7 @@ def main():
         scheduler.step()
         logger.info("Epoch: {} Lr: {}".format(i+1, scheduler.get_lr()[0]))
         train_one_epoch(net, train_loader, optimizer, criterion, logger)
-        acc = val_one_epoch(net, val_loader, logger)
+        acc = val_one_epoch(net, val_loader, logger, best_acc)
         if acc > best_acc:
             best_acc = acc
             torch.save(net.state_dict(), os.path.join(args.log_dir, "best.pth.tar"))
@@ -120,7 +120,7 @@ def train_one_epoch(net, train_loader, optimizer, criterion, logger):
     return
 
 
-def val_one_epoch(net, val_loader, logger):
+def val_one_epoch(net, val_loader, logger, best_acc):
     net.eval()
 
     t0 = time.time()
@@ -138,7 +138,7 @@ def val_one_epoch(net, val_loader, logger):
 
     t1 = time.time()
     acc = 100. * correct / total_ins
-    logger.info("\t\tVal: val_acc {:.2f}%".format(acc))
+    logger.info("\t\tVal: val_acc {:.2f}%/{:.2f}%".format(acc, best_acc))
     logger.info("\t\tTimer: {:.2f} sec.".format(t1 - t0))
     return acc
 

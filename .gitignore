@@ -3,3 +3,5 @@ data/
 __pycache__/
 *log/
 env/
+*.pyc
+fine_tune/*run*

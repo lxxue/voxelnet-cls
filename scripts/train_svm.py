@@ -14,9 +14,9 @@ from torch.autograd import Variable
 
 sys.path.append(dirname(dirname(abspath(__file__))))
 from datasets import modelnet
-from models.config import config as cfg
+from models.config_svm import config as cfg
 from utils import data_transform
-from models import voxelnet
+from models import voxelnet_svm
 
 
 def main():
@@ -42,13 +42,13 @@ def main():
 
     val_dataset = modelnet.ModelNet(args.dset_dir, 'test', transform)
 
-    train_loader = DataLoader(train_dataset, batch_size=cfg.N, shuffle=True,
-                              num_workers=6, collate_fn=customized_collate, pin_memory=True, drop_last=True)
+    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=False,
+                              num_workers=6, collate_fn=customized_collate, pin_memory=True, drop_last=False)
     # shuffle val_dataset since I drop last batch
-    val_loader = DataLoader(val_dataset, batch_size=cfg.N, shuffle=True,
-                            num_workers=6, collate_fn=customized_collate, pin_memory=True, drop_last=True)
+    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False,
+                            num_workers=6, collate_fn=customized_collate, pin_memory=True, drop_last=False)
 
-    net = voxelnet.VoxelNet(args.num_class, input_shape=(cfg.D, cfg.H, cfg.W))
+    net = voxelnet_svm.VoxelNet(args.num_class, input_shape=(cfg.D, cfg.H, cfg.W))
     logger.info("Total # parameters: {}".format(sum([p.numel() for p in net.parameters()])))
     load_checkpoint(logger, net)
     # logger.info("trainable # parameters: {}".format(sum([p.numel() for p in net.parameters() if p.requires_grad])))
@@ -58,23 +58,54 @@ def main():
         else:
             logger.info("Non-trainable params {}: {} {}".format(name, param.size(), param.numel()))
     net.cuda()
-    optimizer = optim.SGD(net.parameters(), args.lr, weight_decay=1e-5)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=8, gamma=0.8)
+    # optimizer = optim.SGD(net.parameters(), args.lr, weight_decay=1e-5)
+    # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=8, gamma=0.8)
 
-    criterion = torch.nn.CrossEntropyLoss()
+    # criterion = torch.nn.CrossEntropyLoss()
 
-    best_acc = 0.
-    for i in range(args.max_epoch):
-        scheduler.step()
-        logger.info("Epoch: {} Lr: {}".format(i+1, scheduler.get_lr()[0]))
-        train_one_epoch(net, train_loader, optimizer, criterion, logger)
-        acc = val_one_epoch(net, val_loader, logger, best_acc)
-        if acc > best_acc:
-            best_acc = acc
-            torch.save(net.state_dict(), os.path.join(args.log_dir, "best.pth.tar"))
-        if i % 5 == 0 or (i+1) % args.max_epoch  == 0:
-            torch.save(net.state_dict(), os.path.join(args.log_dir, "last.pth.tar"))
+    # best_acc = 0.
+    # for i in range(args.max_epoch):
+    #     scheduler.step()
+    #     logger.info("Epoch: {} Lr: {}".format(i+1, scheduler.get_lr()[0]))
+    #     train_one_epoch(net, train_loader, optimizer, criterion, logger)
+    #     acc = val_one_epoch(net, val_loader, logger, best_acc)
+    #     if acc > best_acc:
+    #         best_acc = acc
+    #         torch.save(net.state_dict(), os.path.join(args.log_dir, "best.pth.tar"))
+    #     if i % 5 == 0 or (i+1) % args.max_epoch  == 0:
+    #         torch.save(net.state_dict(), os.path.join(args.log_dir, "last.pth.tar"))
+    logger.info("Start computing train dset features...")
+    train_features, train_labels = get_svm_feature(net, train_dataset, train_loader, logger)
+    print(train_features)
+    np.save("../data/svm/m10_train_features.npy", train_features)
+    np.save("../data/svm/m10_train_labels.npy", train_labels)
+    logger.info("Start computing val dset features...")
+    val_features, val_labels = get_svm_feature(net, val_dataset, val_loader, logger)
+    print(val_features)
+    np.save("../data/svm/m10_val_features.npy", val_features)
+    np.save("../data/svm/m10_val_labels.npy", val_labels)
     return
+
+
+def get_svm_feature(net, dataset, loader, logger):
+    net.eval()
+
+    t0 = time.time()
+    features = np.zeros((len(dataset), 128), dtype=np.float32)
+    labels = np.zeros((len(dataset),), dtype=np.int)
+    features = torch.from_numpy(features).cuda()
+    for i, (voxel_features, voxel_coords, label) in enumerate(loader):
+        voxel_features = Variable(voxel_features.cuda())
+        voxel_coords = Variable(voxel_coords.cuda())
+        # label = Variable(label.cuda())
+
+        features[i] = net(voxel_features, voxel_coords).data
+        labels[i] = label
+
+    features = features.cpu().numpy()
+    t1 = time.time()
+    logger.info("Finish computing all features using {} sec.".format(t1 - t0))
+    return features, labels
 
 
 def train_one_epoch(net, train_loader, optimizer, criterion, logger):
