@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=1 \
+CUDA_VISIBLE_DEVICES=0 \
 python3 ../scripts/train_from_scratch.py \
     --dset_dir ../data/m10 \
     --num_class 10 \

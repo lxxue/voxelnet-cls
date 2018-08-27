@@ -86,9 +86,9 @@ class AppendCenteredCoord(object):
         return np.array(voxel_features), voxel_coords
 
 
-class ToTensor(object):
-
-    def __call__(self, voxel_stuff):
-        voxel_features, voxel_coords = voxel_stuff
-        return torch.from_numpy(voxel_features), torch.from_numpy(voxel_coords)
+#class ToTensor(object):
+#
+#    def __call__(self, voxel_stuff):
+#        voxel_features, voxel_coords = voxel_stuff
+#        return torch.from_numpy(voxel_features), torch.from_numpy(voxel_coords)
 

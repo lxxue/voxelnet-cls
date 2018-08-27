@@ -19,7 +19,7 @@ class ModelNet(Dataset):
         assert self.transform is not None
         voxel_features, voxel_coords = self.transform(data)
         # print(voxel_features.type(), voxel_coords.type(), type(label))
-        return voxel_features, voxel_coords, torch.from_numpy(label)
+        return voxel_features, voxel_coords, label
 
     def __len__(self):
         return self.data.shape[0]

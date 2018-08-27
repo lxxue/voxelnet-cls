@@ -144,7 +144,7 @@ def val_one_epoch(net, val_loader, logger):
 
 
 def init_logger():
-    os.makedirs(args.log_dir, exist_ok=True)
+    os.makedirs(args.log_dir, exist_ok=False)
 
     logger = logging.getLogger('logger')
     logger.setLevel(logging.DEBUG)
@@ -173,7 +173,8 @@ def customized_collate(batch):
     voxel_features = torch.from_numpy(np.concatenate(voxel_features))
     # voxel_coords = torch.from_numpy(np.concatenate(voxel_coords).astype(np.long))
     voxel_coords = torch.from_numpy(np.concatenate(voxel_coords).astype(np.long))
-    label = torch.from_numpy(np.concatenate(label))
+    # label = torch.from_numpy(np.concatenate(label))
+    label = torch.from_numpy(np.array(label))
     return voxel_features, voxel_coords, label
 
 
