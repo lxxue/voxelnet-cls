@@ -22,6 +22,7 @@ from models import voxelnet
 def main():
     torch.backends.cudnn.enable = True
     logger = init_logger()
+    logger.info(str(args))
     save_scripts()
     bin_count = voxel_count()
     logger.info("First 30 bins of training data: \n{}".format(str(bin_count[0][:30])))
@@ -52,7 +53,7 @@ def main():
     load_checkpoint(logger, net)
     # logger.info("trainable # parameters: {}".format(sum([p.numel() for p in net.parameters() if p.requires_grad])))
     for name, param in net.named_parameters():
-        if param.requires_grad:
+        if param.requires_grad == True:
             logger.info("Trainable params {}: {} {}".format(name, param.size(), param.numel()))
         else:
             logger.info("Non-trainable params {}: {} {}".format(name, param.size(), param.numel()))
@@ -205,6 +206,7 @@ def save_scripts():
     os.system("cp {} {}".format("../models/config.py", os.path.join(args.log_dir, "config.py")))
     os.system("cp {} {}".format("../models/voxelnet.py", os.path.join(args.log_dir, "voxelnet.py")))
     os.system("cp {} {}".format("../utils/data_transform.py", os.path.join(args.log_dir, "data_transform.py")))
+    os.system("cp {} {}".format(__file__, os.path.join(args.log_dir, "script.py")))
 
 
 def load_checkpoint(logger, net):

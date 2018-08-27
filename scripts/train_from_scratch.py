@@ -22,6 +22,7 @@ from models import voxelnet
 def main():
     torch.backends.cudnn.enable = True
     logger = init_logger()
+    logger.info(str(args))
     save_scripts()
     bin_count = voxel_count()
     logger.info("First 30 bins of training data: \n{}".format(str(bin_count[0][:30])))
@@ -51,9 +52,11 @@ def main():
     logger.info("Total # parameters: {}".format(sum([p.numel() for p in net.parameters()])))
     # logger.info("trainable # parameters: {}".format(sum([p.numel() for p in net.parameters() if p.requires_grad])))
     for name, param in net.named_parameters():
-        logger.info("{}: {} {}".format(name, param.size(), param.numel()))
+        if param.requires_grad == True:
+            logger.info("Trainable params {}: {} {}".format(name, param.size(), param.numel()))
+        else:
+            logger.info("Non-trainable params {}: {} {}".format(name, param.size(), param.numel()))
     net.cuda()
-    #return
     optimizer = optim.SGD(net.parameters(), args.lr, weight_decay=1e-5)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=8, gamma=0.8)
 
